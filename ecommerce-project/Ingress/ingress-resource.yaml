@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dev-ingress
+  namespace: app-dev
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  labels:
+    name: dev-ingress
+spec:
+  tls:
+    - hosts:
+        - www.theportalurl.com
+        - .theportalurl.com
+      secretName: dev-coure-secret
+  rules:
+    - host: www.theportalurl.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ecommerce-ui
+                port:
+                  number: 8080
+    - host: .theportalurl.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ecommerce-ui
+                port:
+                  number: 8080

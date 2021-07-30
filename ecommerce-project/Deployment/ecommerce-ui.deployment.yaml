@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-ui
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce-ui
+  template:
+    metadata:
+      labels:
+        app: ecommerce-ui
+    spec:
+      containers:
+      - name: ecommerce-ui
+        image: hub.docker.com/company-repo-name/project-name/ecommerce-ui:$(Build.BuildId) #Build ID
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        env:
+          - name: DataBaseConnectionSettings__ConnectionString
+            value: "mongodb://mongo-0.mongo,mongo-1.mongo,mongo-2.mongo"
+          - name: RedisCache__ConnectionString 
+            value: "redis-dev-master"
+          - name: ElasticConfiguration__Uri
+            value: "elastic-es-http:9200"
+          - name: SeviceScheduledTask__RabbitMqIp
+            value: "rabbitmq-0.rabbitmq.rabbits.svc.cluster.local"
+          - name: RABBIT_PORT
+            value: "5672"
+          - name: SeviceScheduledTask__RabbitMqNotificationHost
+            value: "rabbitmq-0.rabbitmq.rabbits.svc.cluster.local"
+          - name: SeviceScheduledTask__RabbitMqIp
+            value: "rabbitmq-0.rabbitmq.rabbits.svc.cluster.local"
+          - name: SeviceScheduledTask__RabbitMqUsername
+            valueFrom:
+              secretKeyRef:
+                name: dev-rmq-pub
+                key:  RABBIT_USERNAME
+          - name: SeviceScheduledTask__RabbitMqPassword
+            valueFrom:
+              secretKeyRef:
+                name: dev-rmq-pub
+                key:  RABBIT_PASSWORD
+      imagePullSecrets:
+        - name: docker-creds
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-ui
+  namespace: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: ecommerce-ui
+  ports:
+  - port: 8080
+    targetPort: 80

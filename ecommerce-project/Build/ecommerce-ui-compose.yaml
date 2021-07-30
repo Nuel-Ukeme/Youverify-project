@@ -1,0 +1,52 @@
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: dev  #Build Repository
+jobs:
+- job: Tasks
+  displayName: Agent Tasks
+  pool:
+    vmImage: ubuntu-18.04  #build images based on ubuntu system 
+  steps:
+  - checkout: self
+  - task: NodeTool@0
+    displayName: Use Node 12.x
+    inputs:
+      versionSpec: 12.x
+  - task: Npm@1
+    displayName: Angular Cli
+    inputs:
+      command: custom
+      workingDir: default  #This folder contains the package.json file (All packages needed to run this application is here)
+      verbose: false
+      customCommand: install -g @angular/cli
+  - task: Npm@1
+    displayName: npm install
+    inputs:
+      workingDir: default
+      verbose: false
+  - task: Npm@1
+    displayName: npm build
+    inputs:
+      command: custom
+      workingDir: default
+      verbose: false
+      customCommand: run build
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)' # Build Artifacts
+    inputs:
+      Contents: >- #add folder for project here also include deployment file into publish artifact
+        default
+        cd-deployment.yaml  
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: drop'
+  - task: Docker@2                        #Build docker images
+    displayName: buildAndPush
+    inputs:
+      containerRegistry: docker-reg       #docker-registry service connection
+      repository: node-app #docker image name 
+      Dockerfile: default/UI.Dockerfile     #Docker File
+      tags: $(Build.BuildId)    #Image tags #incremental
+...
