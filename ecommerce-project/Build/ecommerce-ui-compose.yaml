@@ -3,7 +3,7 @@ resources:
   repositories:
   - repository: self
     type: git
-    ref: dev  #Build Repository
+    ref: prod  #Build Repository
 jobs:
 - job: Tasks
   displayName: Agent Tasks
